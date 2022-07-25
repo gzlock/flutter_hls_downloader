@@ -2,16 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_hls_downloader/utils/utils.dart';
 import 'package:get/get.dart';
 
+import '../../main.dart';
 import '../../utils/project.dart';
 
-class MyHomePage extends StatefulWidget {
-  MyHomePage({Key? key}) : super(key: key);
+class MyHomePage extends StatelessWidget {
+  const MyHomePage({Key? key}) : super(key: key);
 
-  @override
-  State<MyHomePage> createState() => _MyHomePageState();
-}
-
-class _MyHomePageState extends State<MyHomePage> {
   void _createProject(String name) {
     final project = Project(
       id: randomString(),
@@ -25,13 +21,15 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      floatingActionButton: FloatingActionButton.small(
-        onPressed: () async {
-          // parseHls(4);
-          // hlsAudio('https://bitmovin-a.akamaihd.net/content/sintel/hls/playlist.m3u8');
-        },
-        child: Text('测试'),
-      ),
+      floatingActionButton: isDev
+          ? FloatingActionButton.small(
+              onPressed: () async {
+                // parseHls(4);
+                // hlsAudio('https://bitmovin-a.akamaihd.net/content/sintel/hls/playlist.m3u8');
+              },
+              child: Text('测试'),
+            )
+          : null,
       body: Obx(
         () => GridView.builder(
           padding: EdgeInsets.all(10),
