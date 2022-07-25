@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_hls_downloader/pages/project/file_task.dart';
 import 'package:get/get.dart';
 
-import '../../project.dart';
+import '../../utils/project.dart';
 
 class DownLoadToolBar extends StatelessWidget {
   final Project project;

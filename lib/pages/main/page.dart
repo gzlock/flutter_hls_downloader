@@ -1,13 +1,8 @@
-import 'package:dynamic_parallel_queue/dynamic_parallel_queue.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_hls_downloader/pages/project/processing_toast_widget.dart';
-import 'package:flutter_hls_downloader/utils.dart';
+import 'package:flutter_hls_downloader/utils/utils.dart';
 import 'package:get/get.dart';
-import 'package:oktoast/oktoast.dart';
-import 'package:process_run/shell_run.dart';
 
-import '../../project.dart';
-import '../../test.dart';
+import '../../utils/project.dart';
 
 class MyHomePage extends StatefulWidget {
   MyHomePage({Key? key}) : super(key: key);

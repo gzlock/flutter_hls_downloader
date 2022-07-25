@@ -8,8 +8,8 @@ import 'package:get/get.dart';
 import 'package:oktoast/oktoast.dart';
 import 'package:path/path.dart' as path;
 
-import '../../project.dart';
-import '../../utils.dart';
+import '../../utils/project.dart';
+import '../../utils/utils.dart';
 import 'download.dart';
 import 'file_task.dart';
 import 'log.dart';

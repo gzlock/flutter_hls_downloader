@@ -2,9 +2,9 @@ import 'dart:convert';
 
 import 'package:dio/dio.dart';
 import 'package:encrypt/encrypt.dart';
-import 'package:flutter_hls_downloader/project.dart';
-import 'package:flutter_hls_downloader/utils.dart';
 import 'package:oktoast/oktoast.dart';
+
+import 'utils/utils.dart';
 
 final _KEY = 'ilyB29ZdruuQjC45JhBBR7o2Z8WJ26Vg';
 final _IV = 'JUMxvVMmszqUTeKn';

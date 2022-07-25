@@ -12,8 +12,8 @@ import 'package:path/path.dart' as path;
 import 'package:process_run/shell_run.dart';
 
 import '../../main.dart';
-import '../../project.dart';
-import '../../utils.dart';
+import '../../utils/project.dart';
+import '../../utils/utils.dart';
 import 'file_task.dart';
 
 class PageMergeMp4 extends StatelessWidget {

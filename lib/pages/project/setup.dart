@@ -7,7 +7,7 @@ import 'package:get/get.dart';
 import 'package:oktoast/oktoast.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 
-import '../../project.dart';
+import '../../utils/project.dart';
 
 class SettingWidget extends StatelessWidget {
   SettingWidget({

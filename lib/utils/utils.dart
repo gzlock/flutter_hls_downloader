@@ -8,6 +8,12 @@ import 'package:intl/intl.dart';
 import 'package:process_run/shell_run.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+const defaultUserAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) '
+    'AppleWebKit/537.36 (KHTML, like Gecko) '
+    'Chrome/103.0.5060.114 '
+    'Safari/537.36 '
+    'Edg/103.0.1264.49';
+
 late final String storePath;
 late SharedPreferences prefs;
 final dateFormat = DateFormat('yyyy-MM-dd HH:mm:ss');

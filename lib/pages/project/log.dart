@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_hls_downloader/utils.dart';
+import 'package:flutter_hls_downloader/utils/utils.dart';
 import 'package:get/get.dart';
 
 enum LogType {

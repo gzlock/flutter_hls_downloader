@@ -1,6 +1,6 @@
-import 'package:flutter_hls_downloader/project.dart';
-import 'package:flutter_hls_downloader/utils.dart';
 import 'package:flutter_hls_parser/flutter_hls_parser.dart';
+
+import 'utils/utils.dart';
 
 void hlsAudio(String url, [HlsMasterPlaylist? master]) async {
   final http = createHttp(userAgent: defaultUserAgent, proxy: '127.0.0.1:7890');

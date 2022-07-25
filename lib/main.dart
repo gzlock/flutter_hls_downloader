@@ -3,8 +3,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_hls_downloader/pages/project/page.dart';
 import 'package:flutter_hls_downloader/pages/project/page_merge_mp4.dart';
-import 'package:flutter_hls_downloader/project.dart';
-import 'package:flutter_hls_downloader/utils.dart';
+import 'package:flutter_hls_downloader/utils/utils.dart';
 import 'package:get/get.dart';
 import 'package:oktoast/oktoast.dart';
 import 'package:path_provider/path_provider.dart';
@@ -12,6 +11,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:window_manager/window_manager.dart';
 
 import 'pages/main/page.dart';
+import 'utils/project.dart';
 
 class ReloadProjectsWindowListener extends WindowListener {
   @override
@@ -19,6 +19,8 @@ class ReloadProjectsWindowListener extends WindowListener {
     Projects.load();
   }
 }
+
+const isDev = !bool.fromEnvironment('dart.vm.product', defaultValue: false);
 
 const fontName = 'SourceHanSansCN-Regular.otf';
 
@@ -41,6 +43,7 @@ void main() async {
   });
   windowManager.addListener(ReloadProjectsWindowListener());
 
+  Projects.load();
   runApp(const MyApp());
 }
 
