@@ -24,7 +24,7 @@ Dio createHttp({
   int? errorRetry,
   String? proxy,
 }) {
-  // print('创建http');
+  // debugPrint('创建http');
   final http = Dio(BaseOptions(
     // connectTimeout: 10000,
     // receiveTimeout: 20000,
@@ -63,7 +63,7 @@ Future<String?> ffmpegVersion() async {
   } catch (e) {}
 
   /// ffmpeg version 5.0.1-essentials_build-www.gyan.dev Copyright (c) 2000-2022 the FFmpeg developers
-  // print('res: $res');
+  // debugPrint('res: $res');
   if (res == null) return null;
   return res!.split('\n').first.split(' ')[2];
 }

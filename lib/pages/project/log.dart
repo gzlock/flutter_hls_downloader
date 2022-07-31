@@ -57,7 +57,7 @@ class LogToolBar extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        TextButton(
+        MaterialButton(
           child: Text('清空', style: TextStyle(color: Colors.white)),
           onPressed: () => logs.clear(),
         ),

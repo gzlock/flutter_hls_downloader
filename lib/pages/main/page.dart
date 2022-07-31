@@ -3,20 +3,11 @@ import 'package:flutter_hls_downloader/utils/utils.dart';
 import 'package:get/get.dart';
 
 import '../../main.dart';
+import '../../utils/before_close.dart';
 import '../../utils/project.dart';
 
 class MyHomePage extends StatelessWidget {
   const MyHomePage({Key? key}) : super(key: key);
-
-  void _createProject(String name) {
-    final project = Project(
-      id: randomString(),
-      name: name,
-      data: {},
-    );
-    Projects.projects[project.id] = project;
-    Projects.save();
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -26,6 +17,8 @@ class MyHomePage extends StatelessWidget {
               onPressed: () async {
                 // parseHls(4);
                 // hlsAudio('https://bitmovin-a.akamaihd.net/content/sintel/hls/playlist.m3u8');
+                BeforeClose.instance.intercept.value =
+                    !BeforeClose.instance.intercept.value;
               },
               child: Text('测试'),
             )
@@ -77,7 +70,7 @@ class MyHomePage extends StatelessWidget {
                     ),
                   ],
                 ),
-                subtitle: Text(project.name),
+                subtitle: Obx(() => Text(project.name.value)),
                 contentPadding: EdgeInsets.only(left: 6, right: 6),
               );
             }
@@ -100,7 +93,7 @@ class MyHomePage extends StatelessWidget {
                     ],
                   ),
                 );
-                print('name $name');
+                debugPrint('name $name');
                 name = name?.trim();
                 if (name == null || name!.isEmpty) return;
                 _createProject(name!);
@@ -116,5 +109,15 @@ class MyHomePage extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  void _createProject(String name) {
+    final project = Project(
+      id: randomString(),
+      name: name,
+      data: {},
+    );
+    Projects.projects[project.id] = project;
+    Projects.save();
   }
 }

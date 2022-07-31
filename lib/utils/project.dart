@@ -22,7 +22,7 @@ class SettingKeyValueController<T> {
     controller.addListener(() {
       T _value = _toValue(controller.text) as T;
       if (beforeSave != null) _value = beforeSave!(_value);
-      print('controller listener $_value');
+      debugPrint('controller listener $_value');
       value.set(_value);
     });
     focusNode.addListener(() {
@@ -88,7 +88,7 @@ class SettingKeyValue<T> {
       if (val is String) {
         val = val.trim() as T;
       }
-      print('save $key $val');
+      debugPrint('save $key $val');
       _project?._data[key] = val;
       Projects.save();
     });
@@ -137,10 +137,10 @@ class SettingKeyValue<T> {
 }
 
 class Project {
-  final String name;
   final String id;
   final Map<String, dynamic> _data;
 
+  late final RxString name;
   late final SettingKeyValue<String> hls;
   late final SettingKeyValue<String> proxy;
   late final SettingKeyValue<String> savePath;
@@ -157,9 +157,10 @@ class Project {
 
   Project({
     required this.id,
-    required this.name,
+    required String name,
     required Map<String, dynamic> data,
   }) : _data = data {
+    this.name = name.obs;
     hls = SettingKeyValue(
       project: this,
       key: 'hls',
@@ -231,7 +232,7 @@ class Project {
 
   toJson() => {
         'id': id,
-        'name': name,
+        'name': name.value,
         'data': _data,
       };
 
@@ -263,7 +264,7 @@ class Projects {
 
   static void save() {
     final values = projects.values.map((e) => e.toString()).toList();
-    print('保存 $values');
+    debugPrint('保存 $values');
     prefs.setStringList(
       'projects',
       values,

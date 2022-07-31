@@ -5,7 +5,7 @@ import 'dart:math';
 import 'package:dynamic_parallel_queue/dynamic_parallel_queue.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_hls_downloader/pages/project/processing_toast_widget.dart';
+import 'package:flutter_hls_downloader/utils/before_close.dart';
 import 'package:get/get.dart';
 import 'package:oktoast/oktoast.dart';
 import 'package:path/path.dart' as path;
@@ -15,6 +15,7 @@ import '../../main.dart';
 import '../../utils/project.dart';
 import '../../utils/utils.dart';
 import 'file_task.dart';
+import 'processing_toast_widget.dart';
 
 class PageMergeMp4 extends StatelessWidget {
   PageMergeMp4({super.key, required this.project, required this.files});
@@ -26,7 +27,6 @@ class PageMergeMp4 extends StatelessWidget {
   late final waterMark = project.waterMark;
   late final waterMarkText = project.waterMarkText.controller();
   late final waterMarkCount = project.waterMarkCount.controller();
-  final enable = RxBool(true);
   final waterMarkCountUniqueKey = UniqueKey();
   final fileQueue = Queue(parallel: Platform.numberOfProcessors);
 
@@ -112,7 +112,7 @@ class PageMergeMp4 extends StatelessWidget {
   }
 
   Widget createBody() {
-    print('build body');
+    debugPrint('build body');
     final items = [
       ListTile(
         title: Text('FFmpeg'),
@@ -138,7 +138,6 @@ class PageMergeMp4 extends StatelessWidget {
                 children: [
                   Obx(() => TextField(
                         key: waterMarkCountUniqueKey,
-                        enabled: enable.value,
                         keyboardType: TextInputType.number,
                         controller: waterMarkCount.controller,
                         focusNode: waterMarkCount.focusNode,
@@ -167,9 +166,9 @@ class PageMergeMp4 extends StatelessWidget {
   Future<void> startMerge() async {
     if (files.isEmpty) return;
 
+    BeforeClose.instance.intercept.value = true;
     await _copyFontToAppPath();
     await _createFileListTxt();
-    ToastFuture toast;
     if (waterMark.value) {
       await _tsAddWaterMark();
     }
@@ -200,10 +199,11 @@ class PageMergeMp4 extends StatelessWidget {
           ],
         ),
       );
-      print('合并成功');
+      showToast('合并成功');
     } catch (e) {
-      print('合并失败');
+      showToast('合并失败');
     }
+    BeforeClose.instance.intercept.value = false;
   }
 
   /// 创建ts文本列表，给ffmpeg合并用
@@ -218,8 +218,8 @@ class PageMergeMp4 extends StatelessWidget {
   Future<void> _copyFontToAppPath() async {
     final fontFile = File(path.join(storePath, fontName));
     if (fontFile.existsSync()) return;
-    print('copy font');
-    final ByteData data = await rootBundle.load('fonts/$fontName');
+    debugPrint('copy font');
+    final ByteData data = await rootBundle.load('assets/fonts/$fontName');
     List<int> bytes =
         data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes);
     await fontFile.writeAsBytes(bytes);
@@ -239,7 +239,7 @@ class PageMergeMp4 extends StatelessWidget {
 
     List.generate(finalCount, (index) {
       final file = list[index];
-      print('添加水印 ${file.filePath}');
+      debugPrint('添加水印 ${file.filePath}');
       final top = random.nextBool();
       final left = random.nextBool();
       String x = (random.nextInt(90) + 10).toString();
@@ -261,7 +261,7 @@ class PageMergeMp4 extends StatelessWidget {
           '-c:a copy -c:v ${info.codec_name} -profile:v ${info.profile} -level ${info.level}',
           '${file.filePath} -y',
         ].join(' ');
-        // print(command);
+        // debugPrint(command);
         return run(command, verbose: false);
       });
     });
@@ -282,16 +282,22 @@ class PageMergeMp4 extends StatelessWidget {
       '-c copy',
       '"$target" -y'
     ].join(' ');
-    print('合并mp4 $command');
+    debugPrint('合并mp4 $command');
     final toast = ProcessingToastWidget.showText('正在合并为mp4文件');
-    await Future.wait([
-      Future.delayed(Duration(seconds: 1)),
-      run(
-        command,
-        verbose: false,
-      ),
-    ]);
-    toast.dismiss();
+
+    try {
+      await Future.wait([
+        Future.delayed(Duration(seconds: 1)),
+        run(
+          command,
+          verbose: false,
+        ),
+      ]);
+    } catch (e) {
+      rethrow;
+    } finally {
+      toast.dismiss();
+    }
     return File(target);
   }
 

@@ -18,13 +18,15 @@ class DownLoadToolBar extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        TextButton(
-          child: Text('清空', style: TextStyle(color: Colors.white)),
+        MaterialButton(
+          textColor: Colors.white,
+          child: Text('清空'),
           onPressed: () => files.clear(),
         ),
         SizedBox(width: 10),
-        TextButton(
-          child: Text('合并', style: TextStyle(color: Colors.white)),
+        MaterialButton(
+          textColor: Colors.white,
+          child: Text('合并'),
           onPressed: () => Get.toNamed(
             '/mergeMp4/${project.id}',
             arguments: files,

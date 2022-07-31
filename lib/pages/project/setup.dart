@@ -74,7 +74,7 @@ class SettingWidget extends StatelessWidget {
                                     initialDirectory: project.savePath.value,
                                     confirmButtonText: '选择',
                                   );
-                                  print('选择了 $path');
+                                  debugPrint('选择了 $path');
                                   if (path != null) {
                                     project.savePath.set(path);
                                   }
@@ -84,9 +84,11 @@ class SettingWidget extends StatelessWidget {
                     TextButton.icon(
                       icon: Icon(Icons.folder_open),
                       label: Text('打开'),
-                      onPressed: () {
+                      onPressed: () async {
                         if (project.savePath.isBlank!) return;
-                        if (Directory(project.savePath.value).existsSync()) {
+                        final dir = Directory(project.savePath.value);
+                        final exists = await dir.exists();
+                        if (exists) {
                           launchUrlString('file://${project.savePath.value}');
                         } else {
                           showToast('存储目录不存在，无法打开');
@@ -154,7 +156,7 @@ class SettingWidget extends StatelessWidget {
                       ),
                     ],
                   ));
-                  print('reset $sure');
+                  debugPrint('reset $sure');
                   if (sure != true) return;
                   project.reset();
                 }

@@ -1,8 +1,9 @@
-import 'dart:ui';
+import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_hls_downloader/pages/project/page.dart';
 import 'package:flutter_hls_downloader/pages/project/page_merge_mp4.dart';
+import 'package:flutter_hls_downloader/utils/before_close.dart';
 import 'package:flutter_hls_downloader/utils/utils.dart';
 import 'package:get/get.dart';
 import 'package:oktoast/oktoast.dart';
@@ -24,9 +25,13 @@ const isDev = !bool.fromEnvironment('dart.vm.product', defaultValue: false);
 
 const fontName = 'SourceHanSansCN-Regular.otf';
 
-void main() async {
+late final List<String> arguments;
+
+void main(List<String> _arguments) async {
+  arguments = _arguments;
+  debugPrint('启动参数 ${jsonEncode(arguments)}');
   storePath = (await getApplicationSupportDirectory()).path;
-  print('持久化存储路径 $storePath');
+  debugPrint('持久化存储路径 $storePath');
   prefs = await SharedPreferences.getInstance();
   WidgetsFlutterBinding.ensureInitialized();
   // Must add this line.
@@ -42,6 +47,7 @@ void main() async {
     await windowManager.focus();
   });
   windowManager.addListener(ReloadProjectsWindowListener());
+  BeforeClose.instance;
 
   Projects.load();
   runApp(const MyApp());

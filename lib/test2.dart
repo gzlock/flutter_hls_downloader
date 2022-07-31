@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_hls_parser/flutter_hls_parser.dart';
 
 import 'utils/utils.dart';
@@ -7,23 +8,23 @@ void hlsAudio(String url, [HlsMasterPlaylist? master]) async {
 
   final uri = Uri.parse(url);
   final res = await http.get(url);
-  print('内容 ${res.data}');
+  debugPrint('内容 ${res.data}');
 
   late HlsPlaylist playlist;
   try {
     playlist = await HlsPlaylistParser.create(masterPlaylist: master)
         .parseString(uri, res.data);
-  } on ParserException catch (e) {
-    print(e);
+  } catch (e) {
+    debugPrint(e.toString());
   }
 
   if (playlist is HlsMasterPlaylist) {
     // master m3u8 file
-    print('视频流 ${playlist.variants.length}');
-    print('音频流 ${playlist.audios.length}');
-    print('字幕 ${playlist.subtitles.length}');
+    debugPrint('视频流 ${playlist.variants.length}');
+    debugPrint('音频流 ${playlist.audios.length}');
+    debugPrint('字幕 ${playlist.subtitles.length}');
     playlist.variants.forEach((variant) {
-      print('variants ${[
+      debugPrint('variants ${[
         variant.format.id,
         variant.videoGroupId,
         variant.audioGroupId,
