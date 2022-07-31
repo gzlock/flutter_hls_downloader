@@ -4,6 +4,8 @@ on:
   push:
     tags:
       - 'v*'
+  watch:
+    types: [ started ] # 有人点星星就执行
 
 jobs:
   build:
