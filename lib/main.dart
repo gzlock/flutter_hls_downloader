@@ -38,7 +38,7 @@ void main(List<String> _arguments) async {
   await windowManager.ensureInitialized();
   final packageInfo = await PackageInfo.fromPlatform();
   WindowOptions windowOptions = WindowOptions(
-    title: 'HLS下载器 ${packageInfo.version}',
+    title: 'HLS下载器',
     size: Size(800, 600),
     minimumSize: Size(800, 600),
     center: true,
