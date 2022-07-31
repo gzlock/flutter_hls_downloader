@@ -13,6 +13,7 @@ jobs:
       - uses: subosito/flutter-action@v2
         with:
           channel: 'dev'
+      - run: flutter create --platforms=windows,macos,linux .
       - run: flutter build windows
       - name: Zip build files
         run: 7z a ./dist/windows.zip ./build/windows/runner/Release/*
