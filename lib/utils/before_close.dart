@@ -9,7 +9,7 @@ class BeforeClose extends WindowListener {
   }
 
   /// 是否拦截关闭窗口
-  final RxBool intercept = true.obs;
+  final RxBool intercept = false.obs;
   static final instance = BeforeClose._constructor();
 
   @override
