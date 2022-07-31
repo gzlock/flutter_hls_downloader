@@ -13,13 +13,13 @@ jobs:
       - uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
-      - run: rm -f .\windows\runner\CMakeLists.txt #为了更新版本号
-      - run: rm -f .\windows\runner\Runner.rc #为了更新版本号
+      - run: rm ./windows/runner/CMakeLists.txt #为了更新版本号
+      - run: rm ./windows/runner/Runner.rc #为了更新版本号
       - run: flutter create --platforms=windows .
       - run: flutter config --enable-windows-desktop
       - run: flutter build windows
       - name: Zip build files
-        run: 7z a .\dist\windows.zip .\build\windows\runner\Release\*
+        run: 7z a ./dist/windows.zip ./build/windows/runner/Release/*
       - name: Create Release
         id: create_release
         uses: actions/create-release@v1
