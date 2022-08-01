@@ -36,6 +36,8 @@ void main(List<String> _arguments) async {
   WidgetsFlutterBinding.ensureInitialized();
   // Must add this line.
   await windowManager.ensureInitialized();
+
+  /// todo 显示版本号
   final packageInfo = await PackageInfo.fromPlatform();
   WindowOptions windowOptions = WindowOptions(
     title: 'HLS下载器',
