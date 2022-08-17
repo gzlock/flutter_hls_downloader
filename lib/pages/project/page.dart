@@ -190,6 +190,20 @@ class PageProject extends StatelessWidget {
 
   void stopTask() {
     status.value = RxStatus.empty();
+    clearDownloadQueue();
+  }
+
+  void clearDownloadQueue() async {
+    final sure = await Get.dialog(AlertDialog(
+      title: Text('清空视频碎片下载任务吗？'),
+      actions: [
+        TextButton(onPressed: () => Get.back(), child: Text('不清空')),
+        ElevatedButton(
+            onPressed: () => Get.back(result: true), child: Text('不清空')),
+      ],
+    ));
+    if (sure != true) return;
+    project.queue.clear();
   }
 
   Future<void> parseHls(Uri url, [HlsMasterPlaylist? masterPlaylist]) async {
