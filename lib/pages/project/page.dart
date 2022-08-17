@@ -3,17 +3,19 @@ import 'dart:io';
 
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_hls_downloader/utils/before_close.dart';
 import 'package:flutter_hls_parser/flutter_hls_parser.dart';
 import 'package:get/get.dart';
 import 'package:oktoast/oktoast.dart';
 import 'package:path/path.dart' as path;
 
+import '../../utils/before_close.dart';
 import '../../utils/project.dart';
 import '../../utils/utils.dart';
-import 'download.dart';
+import 'download_list.dart';
+import 'download_tool_bar.dart';
 import 'file_task.dart';
 import 'log.dart';
+import 'setting_dialog.dart';
 import 'setup.dart';
 import 'tab_controller.dart';
 
@@ -27,9 +29,6 @@ class PageProject extends StatelessWidget {
 
   /// 日志
   final RxList<Log> logs = RxList();
-
-  /// 直播式HLS的循环下载
-  Timer? looper;
 
   late final _tabController = Get.put(ProjectTabController([
     Tab(text: '设置'),
@@ -86,7 +85,7 @@ class PageProject extends StatelessWidget {
           actions: [
             MaterialButton(
               textColor: Colors.white,
-              onPressed: _editProject,
+              onPressed: () => settingDialog(project),
               child: Icon(Icons.settings),
             ),
           ],
@@ -99,7 +98,7 @@ class PageProject extends StatelessWidget {
               enable: enable,
             ),
             LogListWidget(logs: logs),
-            TaskListWidget(tasks: tasks),
+            DownloadList(tasks: tasks),
           ],
         ),
       ),
@@ -190,17 +189,14 @@ class PageProject extends StatelessWidget {
   }
 
   void stopTask() {
-    looper?.cancel();
-    looper = null;
-    project.queue.clear();
     status.value = RxStatus.empty();
   }
 
   Future<void> parseHls(Uri url, [HlsMasterPlaylist? masterPlaylist]) async {
     HlsPlaylist playlist;
     try {
-      debugPrint('parseHls $url\n'
-          '${masterPlaylist == null ? '没有' : '有'}提供主体m3u8');
+      debugPrint('parseHls $url');
+      debugPrint('${masterPlaylist == null ? '没有' : '有'}提供主体m3u8');
       final data = await http.getUri(url).then((res) => res.data);
       // debugPrint('m3u8 内容\n $data');
       playlist = await HlsPlaylistParser.create(masterPlaylist: masterPlaylist)
@@ -229,13 +225,11 @@ class PageProject extends StatelessWidget {
       // debugPrint('m3u8媒体');
       // media m3u8 file
       mediaM3u8(playlist);
-      if (!playlist.hasEndTag && looper == null) {
-        debugPrint('直播型m3u8，创建循环读取');
-        looper?.cancel();
-        looper = Timer.periodic(Duration(seconds: 2), (timer) {
-          parseHls(url, masterPlaylist);
-        });
-      } else {
+      if (!playlist.hasEndTag && status.value.isLoading) {
+        debugPrint('直播型m3u8');
+        await Future.delayed(Duration(seconds: 2));
+        parseHls(url, masterPlaylist);
+      } else if (status.value.isLoading) {
         stopTask();
         showToast('任务已完成');
       }
@@ -265,36 +259,5 @@ class PageProject extends StatelessWidget {
       tasks[segment.url!] = task;
       project.queue.add(() => task.download(http));
     });
-  }
-
-  void _editProject() async {
-    String name = project.name.value;
-    final sure = await Get.dialog(
-      AlertDialog(
-        title: Text('修改项目名称'),
-        content: TextField(
-          decoration: InputDecoration(labelText: '输入项目名称'),
-          controller: TextEditingController(text: name),
-          onChanged: (val) => name = val,
-        ),
-        actions: [
-          TextButton(onPressed: () => Get.back(), child: Text('取消')),
-          ElevatedButton(
-            onPressed: () {
-              if (name.isNotEmpty != true) {
-                showToast('项目名称不能为空');
-                return;
-              }
-              Get.back(result: true);
-            },
-            child: Text('修改'),
-          ),
-        ],
-      ),
-    );
-    if (sure == true && name.isNotEmpty == true && project.name.value != name) {
-      project.name.value = name;
-      Projects.save();
-    }
   }
 }

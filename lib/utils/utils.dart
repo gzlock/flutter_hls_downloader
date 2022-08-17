@@ -4,6 +4,7 @@ import 'dart:math' as math;
 import 'package:dio/adapter.dart';
 import 'package:dio/dio.dart';
 import 'package:dio_smart_retry/dio_smart_retry.dart';
+import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:process_run/shell_run.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -26,17 +27,17 @@ Dio createHttp({
 }) {
   // debugPrint('创建http');
   final http = Dio(BaseOptions(
-    // connectTimeout: 10000,
-    // receiveTimeout: 20000,
+    connectTimeout: 5000,
+    receiveTimeout: 10000,
     followRedirects: true,
     headers: {'user-agent': userAgent},
   ));
   if (errorRetry != null && errorRetry > 0) {
     http.interceptors.add(RetryInterceptor(
       dio: http,
-      logPrint: print, // specify log function (optional)
-      retries: errorRetry, // retry count (
-      // optional)
+      logPrint: debugPrint, // specify log function (optional)
+      retries: errorRetry,
+      retryDelays: [], // retry count (
     ));
   }
   if (proxy != null && proxy.isNotEmpty) {
