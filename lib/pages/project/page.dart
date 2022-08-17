@@ -195,11 +195,13 @@ class PageProject extends StatelessWidget {
 
   void clearDownloadQueue() async {
     final sure = await Get.dialog(AlertDialog(
-      title: Text('清空视频碎片下载任务吗？'),
+      title: Text('是否清空视频碎片下载队列？'),
       actions: [
-        TextButton(onPressed: () => Get.back(), child: Text('不清空')),
+        TextButton(onPressed: () => Get.back(), child: Text('否')),
         ElevatedButton(
-            onPressed: () => Get.back(result: true), child: Text('不清空')),
+          onPressed: () => Get.back(result: true),
+          child: Text('是'),
+        ),
       ],
     ));
     if (sure != true) return;
