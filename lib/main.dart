@@ -6,7 +6,6 @@ import 'package:flutter_hls_downloader/pages/project/page_merge_mp4.dart';
 import 'package:flutter_hls_downloader/utils/utils.dart';
 import 'package:get/get.dart';
 import 'package:oktoast/oktoast.dart';
-import 'package:package_info_plus/package_info_plus.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:window_manager/window_manager.dart';
@@ -38,9 +37,9 @@ void main(List<String> _arguments) async {
   await windowManager.ensureInitialized();
 
   /// todo 显示版本号
-  final packageInfo = await PackageInfo.fromPlatform();
+  // final packageInfo = await PackageInfo.fromPlatform();
   WindowOptions windowOptions = WindowOptions(
-    title: 'HLS下载器',
+    title: 'HLS下载器 v1.0.6',
     size: Size(800, 600),
     minimumSize: Size(800, 600),
     center: true,
