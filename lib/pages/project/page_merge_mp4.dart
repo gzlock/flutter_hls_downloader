@@ -5,15 +5,15 @@ import 'dart:math';
 import 'package:dynamic_parallel_queue/dynamic_parallel_queue.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_hls_downloader/utils/before_close.dart';
 import 'package:get/get.dart';
 import 'package:oktoast/oktoast.dart';
 import 'package:path/path.dart' as path;
 import 'package:process_run/shell_run.dart';
 
 import '../../main.dart';
+import '../../utils/before_close.dart';
 import '../../utils/project.dart';
-import '../../utils/utils.dart';
+import '../../utils/utils.dart'; 
 import 'file_task.dart';
 import 'processing_toast_widget.dart';
 
@@ -96,7 +96,10 @@ class PageMergeMp4 extends StatelessWidget {
                       padding: EdgeInsets.only(left: 8, right: 8),
                       child: Row(
                         children: [
-                          Icon(Icons.call_merge),
+                          RotatedBox(
+                            child: Icon(Icons.call_merge),
+                            quarterTurns: 1,
+                          ),
                           SizedBox(width: 8),
                           Text('合并'),
                         ],
@@ -119,8 +122,12 @@ class PageMergeMp4 extends StatelessWidget {
         subtitle: Text(_ffmpegVersion.value),
       ),
       ListTile(
-        title: Text('已有视频碎片'),
+        title: Text('总视频碎片文件数量'),
         trailing: Text(files.length.toString()),
+      ),
+      ListTile(
+        title: Text('有效的视频碎片文件数量'),
+        trailing: Text(_list().length.toString()),
       ),
       ListTile(
         title: Text('撤销添加水印操作'),
@@ -136,16 +143,14 @@ class PageMergeMp4 extends StatelessWidget {
         subtitle: waterMark.value
             ? Column(
                 children: [
-                  Obx(() => TextField(
-                        key: waterMarkCountUniqueKey,
-                        keyboardType: TextInputType.number,
-                        controller: waterMarkCount.controller,
-                        focusNode: waterMarkCount.focusNode,
-                        decoration: InputDecoration(labelText: '给多少碎片添加水印'),
-                        inputFormatters: [
-                          FilteringTextInputFormatter.digitsOnly
-                        ],
-                      )),
+                  TextField(
+                    key: waterMarkCountUniqueKey,
+                    keyboardType: TextInputType.number,
+                    controller: waterMarkCount.controller,
+                    focusNode: waterMarkCount.focusNode,
+                    decoration: InputDecoration(labelText: '给多少碎片添加水印'),
+                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                  ),
                   TextField(
                     decoration: InputDecoration(labelText: '水印文字'),
                     controller: waterMarkText.controller,
@@ -181,7 +186,6 @@ class PageMergeMp4 extends StatelessWidget {
           actions: [
             ElevatedButton(
               onPressed: () {
-                Get.back();
                 String? command;
                 if (GetPlatform.isWindows) {
                   command = 'explorer /select,"${file.absolute.path}"';
@@ -189,9 +193,10 @@ class PageMergeMp4 extends StatelessWidget {
                   command = ['open', '-R', file.absolute.path].join(' ');
                 }
                 if (command == null) {
-                  showToast('无法打开文件');
+                  showToast('无法定位文件');
                   return;
                 }
+                Get.back();
                 run(command, verbose: false);
               },
               child: Text('打开文件'),
@@ -206,10 +211,14 @@ class PageMergeMp4 extends StatelessWidget {
     BeforeClose.instance.intercept.value = false;
   }
 
+  Iterable<FileTask> _list() {
+    return files.values.where((file) => file.status.value.isSuccess);
+  }
+
   /// 创建ts文本列表，给ffmpeg合并用
   Future<void> _createFileListTxt() async {
     final txt = File(path.join(project.savePath.value, 'list.txt'));
-    await txt.writeAsString(files.values.map<String>((f) {
+    await txt.writeAsString(_list().map<String>((f) {
       return 'file \'${f.filePath.toString()}\'';
     }).join('\n'));
   }

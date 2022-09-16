@@ -194,8 +194,9 @@ class PageProject extends StatelessWidget {
   }
 
   void clearDownloadQueue() async {
+    if (project.queue.pending == 0) return;
     final sure = await Get.dialog(AlertDialog(
-      title: Text('是否清空视频碎片下载队列？'),
+      title: Text('是否停止所有下载任务？'),
       actions: [
         TextButton(onPressed: () => Get.back(), child: Text('否')),
         ElevatedButton(
@@ -209,22 +210,21 @@ class PageProject extends StatelessWidget {
   }
 
   Future<void> parseHls(Uri url, [HlsMasterPlaylist? masterPlaylist]) async {
-    HlsPlaylist playlist;
+    HlsPlaylist? playlist;
     try {
-      debugPrint('parseHls $url');
-      debugPrint('${masterPlaylist == null ? '没有' : '有'}提供主体m3u8');
+      // debugPrint('parseHls $url');
+      // debugPrint('${masterPlaylist == null ? '没有' : '有'}提供主体m3u8');
       final data = await http.getUri(url).then((res) => res.data);
       // debugPrint('m3u8 内容\n $data');
       playlist = await HlsPlaylistParser.create(masterPlaylist: masterPlaylist)
           .parseString(url, data);
     } catch (e) {
       if (e is DioError) {
-        log('Hls源返回网络错误：\n' + e.message, LogType.error);
+        log('Hls源返回网络错误：\n${e.message}', LogType.error);
       } else {
-        log('未知错误：\n' + e.toString(), LogType.error);
+        log('未知错误：\n ${e.toString()}', LogType.error);
       }
-      status.value = RxStatus.empty();
-      rethrow;
+      return;
     }
     if (playlist is HlsMasterPlaylist) {
       // master m3u8 file

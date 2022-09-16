@@ -19,10 +19,12 @@ class FileTask {
 
   Future<FileTask> download(Dio http) async {
     status.value = RxStatus.loading();
-    await http.download(url, filePath).catchError((err) {
+    await http.download(url, filePath).then((value) {
+      status.value = RxStatus.success();
+    }).catchError((err) {
       debugPrint('下载失败 $url');
+      status.value = RxStatus.error(err.toString());
     });
-    status.value = RxStatus.success();
     return this;
   }
 }

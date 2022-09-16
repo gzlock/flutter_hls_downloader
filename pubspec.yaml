@@ -39,6 +39,7 @@ dependencies:
   window_manager: any
   url_launcher: any
   shared_preferences: any
+  path: any
   path_provider: any
   process_run: any
   oktoast: any
