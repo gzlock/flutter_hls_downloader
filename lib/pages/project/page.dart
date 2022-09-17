@@ -224,7 +224,6 @@ class PageProject extends StatelessWidget {
       } else {
         log('未知错误：\n ${e.toString()}', LogType.error);
       }
-      return;
     }
     if (playlist is HlsMasterPlaylist) {
       // master m3u8 file
