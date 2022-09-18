@@ -241,7 +241,9 @@ class Project {
 
   void reset() async {
     _data.clear();
-    _list.forEach((kv) => kv.reset());
+    for (var kv in _list) {
+      kv.reset();
+    }
     save();
   }
 

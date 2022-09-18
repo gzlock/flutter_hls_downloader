@@ -12,21 +12,17 @@ import 'package:process_run/shell_run.dart';
 
 import '../../main.dart';
 import '../../utils/before_close.dart';
-import '../../utils/project.dart';
-import '../../utils/utils.dart'; 
+import '../../utils/utils.dart';
 import 'file_task.dart';
 import 'processing_toast_widget.dart';
+import 'project_controller.dart';
 
-class PageMergeMp4 extends StatelessWidget {
-  PageMergeMp4({super.key, required this.project, required this.files});
-
-  final Project project;
-  final RxMap<String, FileTask> files;
+class PageMergeMp4 extends GetWidget<ProjectController> {
   final hasFFmpeg = RxnBool();
   final _ffmpegVersion = RxString('');
-  late final waterMark = project.waterMark;
-  late final waterMarkText = project.waterMarkText.controller();
-  late final waterMarkCount = project.waterMarkCount.controller();
+  late final waterMark = controller.project.waterMark;
+  late final waterMarkText = controller.project.waterMarkText.controller();
+  late final waterMarkCount = controller.project.waterMarkCount.controller();
   final waterMarkCountUniqueKey = UniqueKey();
   final fileQueue = Queue(parallel: Platform.numberOfProcessors);
 
@@ -123,7 +119,7 @@ class PageMergeMp4 extends StatelessWidget {
       ),
       ListTile(
         title: Text('总视频碎片文件数量'),
-        trailing: Text(files.length.toString()),
+        trailing: Text(controller.tasks.length.toString()),
       ),
       ListTile(
         title: Text('有效的视频碎片文件数量'),
@@ -169,7 +165,7 @@ class PageMergeMp4 extends StatelessWidget {
 
   /// 开始合并文件
   Future<void> startMerge() async {
-    if (files.isEmpty) return;
+    if (controller.tasks.isEmpty) return;
 
     BeforeClose.instance.intercept.value = true;
     await _copyFontToAppPath();
@@ -212,12 +208,12 @@ class PageMergeMp4 extends StatelessWidget {
   }
 
   Iterable<FileTask> _list() {
-    return files.values.where((file) => file.status.value.isSuccess);
+    return controller.tasks.values.where((file) => file.state.value.isSuccess);
   }
 
   /// 创建ts文本列表，给ffmpeg合并用
   Future<void> _createFileListTxt() async {
-    final txt = File(path.join(project.savePath.value, 'list.txt'));
+    final txt = File(path.join(controller.project.savePath.value, 'list.txt'));
     await txt.writeAsString(_list().map<String>((f) {
       return 'file \'${f.filePath.toString()}\'';
     }).join('\n'));
@@ -239,7 +235,8 @@ class PageMergeMp4 extends StatelessWidget {
     final font = path.join(storePath, fontName);
     final watermark = waterMarkText.value.value;
     final random = Random();
-    final List<FileTask> list = List.from(files.values)..shuffle(random);
+    final List<FileTask> list = List.from(controller.tasks.values)
+      ..shuffle(random);
     final finalCount = list.length > waterMarkCount.value.value
         ? waterMarkCount.value.value
         : list.length;
@@ -281,13 +278,13 @@ class PageMergeMp4 extends StatelessWidget {
 
   Future<File> _mergeToMp4() async {
     final now = DateTime.now();
-    final target =
-        path.join(project.savePath.value, '${fileNameFormat.format(now)}.mp4');
+    final target = path.join(
+        controller.project.savePath.value, '${fileNameFormat.format(now)}.mp4');
     final command = [
       'ffmpeg',
       '-f concat',
       '-safe 0',
-      '-i "${path.join(project.savePath.value, 'list.txt')}"',
+      '-i "${path.join(controller.project.savePath.value, 'list.txt')}"',
       '-c copy',
       '"$target" -y'
     ].join(' ');
@@ -313,11 +310,11 @@ class PageMergeMp4 extends StatelessWidget {
   /// 删除已添加文字水印的视频碎片
   /// 即恢复原状
   _recoverFiles() async {
-    if (files.isEmpty) return;
+    if (controller.tasks.isEmpty) return;
 
-    for (var file in files.values) {
+    for (var file in controller.tasks.values) {
       fileQueue.add(() async {
-        final old = File(file.filePath + '_');
+        final old = File('${file.filePath}_');
         if (await old.exists()) {
           await File(file.filePath).delete();
           await old.rename(file.filePath);

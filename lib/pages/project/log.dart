@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_hls_downloader/utils/utils.dart';
 import 'package:get/get.dart';
+
+import '../../utils/utils.dart';
+import 'project_controller.dart';
 
 enum LogType {
   normal,
@@ -11,13 +13,15 @@ class Log {
   final LogType type;
   final String text;
   final DateTime time;
+  final Color? color;
 
-  Log(this.text, this.time, this.type);
+  Log(this.text, this.time, this.type, {this.color});
 
   Widget toRow() {
     return DefaultTextStyle(
-      style:
-          TextStyle(color: type == LogType.normal ? Colors.black : Colors.red),
+      style: TextStyle(
+        color: color ?? (type == LogType.normal ? Colors.black : Colors.red),
+      ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -29,13 +33,10 @@ class Log {
   }
 }
 
-class LogListWidget extends StatelessWidget {
-  final RxList<Log> logs;
-
-  const LogListWidget({super.key, required this.logs});
-
+class LogListWidget extends GetWidget<ProjectController> {
   @override
   Widget build(BuildContext context) {
+    final logs = controller.logs;
     return Obx(() => logs.isEmpty
         ? Center(child: Text('暂无日志'))
         : ListView.separated(
@@ -48,18 +49,14 @@ class LogListWidget extends StatelessWidget {
   }
 }
 
-class LogToolBar extends StatelessWidget {
-  final RxList<Log> logs;
-
-  const LogToolBar({super.key, required this.logs});
-
+class LogActions extends GetWidget<ProjectController> {
   @override
   Widget build(BuildContext context) {
     return Row(
       children: [
         MaterialButton(
           child: Text('清空', style: TextStyle(color: Colors.white)),
-          onPressed: () => logs.clear(),
+          onPressed: () => controller.logs.clear(),
         ),
       ],
     );

@@ -10,6 +10,7 @@ import 'package:window_manager/window_manager.dart';
 import 'pages/main/page.dart';
 import 'pages/project/page.dart';
 import 'pages/project/page_merge_mp4.dart';
+import 'pages/project/project_controller.dart';
 import 'utils/project.dart';
 import 'utils/utils.dart';
 
@@ -72,30 +73,14 @@ class MyApp extends StatelessWidget {
         getPages: [
           GetPage(name: '/', page: () => MyHomePage()),
           GetPage(
-              name: '/project/:id',
-              page: () {
-                final project = Projects.projects[Get.parameters['id']];
-                if (project == null) {
-                  showToast('不存在的项目');
-                  Future.microtask(() => Get.back());
-                  return SizedBox();
-                }
-                return PageProject(project: project);
-              }),
-          GetPage(
-              name: '/mergeMp4/:id',
-              page: () {
-                final project = Projects.projects[Get.parameters['id']];
-                if (project == null) {
-                  showToast('不存在的项目');
-                  Future.microtask(() => Get.back());
-                  return SizedBox();
-                }
-                return PageMergeMp4(
-                  project: project,
-                  files: Get.arguments,
-                );
-              }),
+            name: '/project/:id',
+            page: () => PageProject(),
+            binding: BindingsBuilder(() {
+              Get.lazyPut<ProjectController>(() =>
+                  ProjectController(Projects.projects[Get.parameters['id']]!));
+            }),
+          ),
+          GetPage(name: '/mergeMp4/:id', page: () => PageMergeMp4()),
         ],
       ),
     );

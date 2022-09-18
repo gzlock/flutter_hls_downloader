@@ -1,147 +1,109 @@
-import 'dart:async';
 import 'dart:io';
 
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_hls_parser/flutter_hls_parser.dart';
 import 'package:get/get.dart';
 import 'package:oktoast/oktoast.dart';
-import 'package:path/path.dart' as path;
 
-import '../../utils/before_close.dart';
 import '../../utils/project.dart';
-import '../../utils/utils.dart';
 import 'download_list.dart';
-import 'download_tool_bar.dart';
-import 'file_task.dart';
+import 'download_list_actions.dart';
+import 'drawer.dart';
 import 'log.dart';
-import 'setting_dialog.dart';
+import 'project_controller.dart';
 import 'setup.dart';
 import 'tab_controller.dart';
 
-class PageProject extends StatelessWidget {
-  PageProject({super.key, required this.project});
-
-  final Project project;
-
-  /// 开始下载状态
-  final Rx<RxStatus> status = RxStatus.empty().obs;
-
-  /// 日志
-  final RxList<Log> logs = RxList();
-
+class PageProject extends GetWidget<ProjectController> {
+  final _scaffoldKey = GlobalKey<ScaffoldState>();
   late final _tabController = Get.put(ProjectTabController([
     Tab(text: '设置'),
-    Tab(child: Obx(() => Text('日志[${logs.length}]'))),
-    Tab(child: Obx(() => Text('下载列表[${tasks.length}]'))),
+    Tab(child: Obx(() => Text('日志[${controller.logs.length}]'))),
+    Tab(child: Obx(() => Text('下载列表[${controller.tasks.length}]'))),
   ]));
-  late final hls = project.hls.controller();
-  late final proxy = project.proxy.controller();
-  late final savePath = project.savePath.controller();
-  late final http = createHttp(
-    userAgent: project.userAgent.value,
-    errorRetry: project.errorRetry.value,
-    proxy: project.proxy.value,
-  );
-  final RxBool enable = RxBool(true)
-    ..listen((val) {
-      BeforeClose.instance.intercept.value = !val;
-    });
-
-  final RxMap<String, FileTask> tasks = RxMap();
 
   @override
   Widget build(BuildContext context) {
-    return WillPopScope(
-      child: Scaffold(
-        appBar: AppBar(
-          title: Obx(() => Text('项目 ${project.name}')),
-          bottom: PreferredSize(
-            preferredSize: Size.fromHeight(kTextTabBarHeight),
-            child: Row(
-              children: [
-                TabBar(
-                  isScrollable: true,
-                  controller: _tabController.controller,
-                  tabs: _tabController.tabs,
-                ),
-                Expanded(child: SizedBox()),
-                Obx(() {
-                  switch (_tabController.index.value) {
-                    case 0:
-                      return startButton();
-                    case 1:
-                      return LogToolBar(logs: logs);
-                    default:
-                      return DownLoadToolBar(
-                        project: project,
-                        files: tasks,
-                      );
-                  }
-                })
-              ],
+    final project = Projects.projects[Get.parameters['id']];
+    if (project == null) {
+      showToast('不存在的项目');
+      Get.back();
+      return SizedBox.shrink();
+    }
+    Get.create(() => ProjectController(project));
+    return GetBuilder<ProjectController>(builder: (project) {
+      return WillPopScope(
+        onWillPop: () async {
+          if (!controller.isWorking) return true;
+          final sure = await Get.dialog(AlertDialog(
+            title: Text('正在录制，确认退出录制工作？'),
+            actions: [
+              TextButton(onPressed: () => Get.back(), child: Text('取消')),
+              ElevatedButton(
+                onPressed: () => Get.back(result: true),
+                child: Text('确定'),
+              ),
+            ],
+          ));
+          if (sure != true) return false;
+          stopTask();
+          return true;
+        },
+        child: Scaffold(
+          key: _scaffoldKey,
+          appBar: AppBar(
+            title: Obx(() => Text('项目 ${project.project.name}')),
+            actions: [
+              MaterialButton(
+                textColor: Colors.white,
+                onPressed: () => _scaffoldKey.currentState?.openEndDrawer(),
+                child: Icon(Icons.settings),
+              ),
+            ],
+            bottom: PreferredSize(
+              preferredSize: Size.fromHeight(kTextTabBarHeight),
+              child: Row(
+                children: [
+                  TabBar(
+                    isScrollable: true,
+                    controller: _tabController.controller,
+                    tabs: _tabController.tabs,
+                  ),
+                  Expanded(child: SizedBox()),
+                  Obx(() {
+                    switch (_tabController.index.value) {
+                      case 0:
+                        return startButton();
+                      case 1:
+                        return LogActions();
+                      default:
+                        return DownLoadListActions();
+                    }
+                  })
+                ],
+              ),
             ),
           ),
-          actions: [
-            MaterialButton(
-              textColor: Colors.white,
-              onPressed: () => settingDialog(project),
-              child: Icon(Icons.settings),
-            ),
-          ],
+          endDrawer: ProjectDrawer(),
+          body: TabBarView(
+            controller: _tabController.controller,
+            children: [
+              SettingWidget(),
+              LogListWidget(),
+              DownloadList(),
+            ],
+          ),
         ),
-        body: TabBarView(
-          controller: _tabController.controller,
-          children: [
-            SettingWidget(
-              project: project,
-              enable: enable,
-            ),
-            LogListWidget(logs: logs),
-            DownloadList(tasks: tasks),
-          ],
-        ),
-      ),
-      onWillPop: () async {
-        if (enable.value) return true;
-        final sure = await Get.dialog(AlertDialog(
-          title: Text('正在录制，确认退出录制工作？'),
-          actions: [
-            TextButton(onPressed: () => Get.back(), child: Text('取消')),
-            ElevatedButton(
-              onPressed: () => Get.back(result: true),
-              child: Text('确定'),
-            ),
-          ],
-        ));
-        if (sure != true) return false;
-        stopTask();
-        return true;
-      },
-    );
+      );
+    });
   }
-
-  void log(String text, [LogType type = LogType.normal]) =>
-      logs.insert(0, Log(text, DateTime.now(), type));
 
   Widget startButton() {
     return Row(
       children: [
         Obx(() {
-          var onTap, child;
-          if (status.value.isEmpty) {
-            onTap = startTask;
-            child = Row(
-              children: [
-                Icon(
-                  Icons.play_circle_outline,
-                  color: Colors.white,
-                ),
-                SizedBox(width: 8),
-                Text('开始'),
-              ],
-            );
-          } else {
+          void Function() onTap;
+          Widget child;
+          if (controller.isWorking) {
             onTap = stopTask;
             child = Row(
               children: [
@@ -153,11 +115,23 @@ class PageProject extends StatelessWidget {
                 Text('停止'),
               ],
             );
+          } else {
+            onTap = startTask;
+            child = Row(
+              children: [
+                Icon(
+                  Icons.play_circle_outline,
+                  color: Colors.white,
+                ),
+                SizedBox(width: 8),
+                Text('开始'),
+              ],
+            );
           }
           return MaterialButton(
             onPressed: onTap,
-            child: child,
             textColor: Colors.white,
+            child: child,
           );
         }),
       ],
@@ -165,34 +139,33 @@ class PageProject extends StatelessWidget {
   }
 
   void startTask() {
-    if (!status.value.isEmpty) return;
-    if (project.hls.isBlank != false) {
+    print('startProject ${controller.isWorking}');
+    if (controller.isWorking) return;
+    if (controller.project.hls.isBlank != false) {
       showToast('请填写Hls源');
-      return log('请填写Hls源', LogType.error);
+      return controller.log('请填写Hls源', type: LogType.error);
     }
-    if (project.savePath.isBlank != false) {
+    if (controller.project.savePath.isBlank != false) {
       showToast('请选择保存路径');
-      return log('请选择保存路径', LogType.error);
+      return controller.log('请选择保存路径', type: LogType.error);
     } else {
-      final dir = Directory(project.savePath.value);
+      final dir = Directory(controller.project.savePath.value);
       if (!dir.existsSync()) {
         showToast('存储目录不存在');
-        return log('存储目录不存在', LogType.error);
+        return controller.log('存储目录不存在', type: LogType.error);
       }
     }
-    status.value = RxStatus.loading();
-    enable.value = false;
-    parseHls(Uri.parse(project.hls.value), isFirst: true);
+    controller.start();
   }
 
   void stopTask() {
-    enable.value = true;
-    status.value = RxStatus.empty();
+    showToast('任务已完成');
+    controller.stop();
     clearDownloadQueue();
   }
 
   void clearDownloadQueue() async {
-    if (project.queue.pending == 0) return;
+    if (controller.project.queue.pending == 0) return;
     final sure = await Get.dialog(AlertDialog(
       title: Text('是否停止所有下载任务？'),
       actions: [
@@ -204,86 +177,6 @@ class PageProject extends StatelessWidget {
       ],
     ));
     if (sure != true) return;
-    project.queue.clear();
-  }
-
-  Future<void> parseHls(
-    Uri url, {
-    HlsMasterPlaylist? masterPlaylist,
-    required bool isFirst, // 是不是开始任务后的第一次获取hls
-  }) async {
-    HlsPlaylist? playlist;
-    try {
-      // debugPrint('parseHls $url');
-      // debugPrint('${masterPlaylist == null ? '没有' : '有'}提供主体m3u8');
-      final data = await http.getUri(url).then((res) => res.data);
-      // debugPrint('m3u8 内容\n $data');
-      playlist = await HlsPlaylistParser.create(masterPlaylist: masterPlaylist)
-          .parseString(url, data);
-    } catch (e) {
-      if (e is DioError) {
-        log('Hls源返回网络错误：\n${e.message}', LogType.error);
-      } else {
-        log('未知错误：\n ${e.toString()}', LogType.error);
-      }
-      if (isFirst) stopTask();
-    }
-    if (playlist is HlsMasterPlaylist) {
-      // master m3u8 file
-      debugPrint('m3u8主体 变体(${playlist.variants.length})');
-      playlist.variants
-        ..sort((a, b) => b.format.bitrate! - a.format.bitrate!)
-        ..forEach((v) {
-          log('variants 分辨率 ${v.format.width} x ${v.format.height}, 码率 ${v.format.bitrate}\n${v.url}');
-        });
-      if (status.value.isLoading) {
-        return parseHls(
-          playlist.variants.first.url,
-          masterPlaylist: playlist,
-          isFirst: false,
-        );
-      }
-    } else if (playlist is HlsMediaPlaylist) {
-      // debugPrint('m3u8媒体');
-      // media m3u8 file
-      mediaM3u8(playlist);
-      if (!playlist.hasEndTag && status.value.isLoading) {
-        debugPrint('直播型m3u8');
-        await Future.delayed(Duration(seconds: 2));
-        parseHls(
-          url,
-          masterPlaylist: masterPlaylist,
-          isFirst: false,
-        );
-      } else if (status.value.isLoading) {
-        stopTask();
-        showToast('任务已完成');
-      }
-    }
-  }
-
-  void mediaM3u8(HlsMediaPlaylist variant) {
-    variant.segments.forEach((segment) {
-      final url = segment.url;
-      if (url == null) return;
-      if (tasks.containsKey(url)) return;
-
-      final uri = Uri.parse(url);
-      late final String fileName, downloadUrl;
-      if (uri.isAbsolute) {
-        downloadUrl = url;
-        fileName = uri.pathSegments.last;
-      } else {
-        downloadUrl = Uri.parse(variant.baseUri!).resolve(url).toString();
-        fileName = Uri.parse(url).pathSegments.last;
-      }
-
-      final task = FileTask(
-        downloadUrl,
-        path.join(project.savePath.value, fileName),
-      );
-      tasks[segment.url!] = task;
-      project.queue.add(() => task.download(http));
-    });
+    controller.project.queue.clear();
   }
 }

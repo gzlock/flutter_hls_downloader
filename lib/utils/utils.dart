@@ -9,6 +9,8 @@ import 'package:intl/intl.dart';
 import 'package:process_run/shell_run.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'project.dart';
+
 const defaultUserAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) '
     'AppleWebKit/537.36 (KHTML, like Gecko) '
     'Chrome/103.0.5060.114 '
@@ -19,6 +21,12 @@ late final String storePath;
 late SharedPreferences prefs;
 final dateFormat = DateFormat('yyyy-MM-dd HH:mm:ss');
 final fileNameFormat = DateFormat('yyyyMMdd HH_mm_ss');
+
+Dio createHttpFromProject(Project project) => createHttp(
+      userAgent: project.userAgent.value,
+      errorRetry: project.errorRetry.value,
+      proxy: project.proxy.value,
+    );
 
 Dio createHttp({
   required String userAgent,
