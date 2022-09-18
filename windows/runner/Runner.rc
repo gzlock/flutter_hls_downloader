@@ -93,7 +93,7 @@ BEGIN
             VALUE "FileDescription", "flutter_hls_downloader" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
             VALUE "InternalName", "flutter_hls_downloader" "\0"
-            VALUE "LegalCopyright", "Copyright (C) 2022 com.gzlock. All rights reserved." "\0"
+            VALUE "LegalCopyright", "Copyright (C) 2022 gzlock88@gmail.com. All rights reserved." "\0"
             VALUE "OriginalFilename", "flutter_hls_downloader.exe" "\0"
             VALUE "ProductName", "flutter_hls_downloader" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"

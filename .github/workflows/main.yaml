@@ -16,13 +16,11 @@ jobs:
       - run: flutter config --enable-windows-desktop
       - run: flutter build windows
       - name: Zip build files
-        if: startsWith(github.ref, 'refs/tags/')
-        run: 7z a ./dist/windows.zip ./build/windows/runner/Release/*
+        run: 7z a ./dist/flutter_hls_downloader_win.zip ./build/windows/runner/Release/*
       - name: Create Release
         uses: softprops/action-gh-release@v1
-        if: startsWith(github.ref, 'refs/tags/')
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           body_path: ./CHANGELOG.txt
           files: |
-            ./dist/windows.zip
+            ./dist/flutter_hls_downloader_win.zip
