@@ -167,8 +167,8 @@ class PageProject extends StatelessWidget {
   void startTask() {
     if (!status.value.isEmpty) return;
     if (project.hls.isBlank != false) {
-      showToast('请填写Hls来源');
-      return log('请填写Hls来源', LogType.error);
+      showToast('请填写Hls源');
+      return log('请填写Hls源', LogType.error);
     }
     if (project.savePath.isBlank != false) {
       showToast('请选择保存路径');
@@ -182,13 +182,11 @@ class PageProject extends StatelessWidget {
     }
     status.value = RxStatus.loading();
     enable.value = false;
-    parseHls(Uri.parse(project.hls.value)).catchError((e) {
-      enable.value = true;
-      status.value = RxStatus.empty();
-    });
+    parseHls(Uri.parse(project.hls.value), isFirst: true);
   }
 
   void stopTask() {
+    enable.value = true;
     status.value = RxStatus.empty();
     clearDownloadQueue();
   }
@@ -209,7 +207,11 @@ class PageProject extends StatelessWidget {
     project.queue.clear();
   }
 
-  Future<void> parseHls(Uri url, [HlsMasterPlaylist? masterPlaylist]) async {
+  Future<void> parseHls(
+    Uri url, {
+    HlsMasterPlaylist? masterPlaylist,
+    required bool isFirst, // 是不是开始任务后的第一次获取hls
+  }) async {
     HlsPlaylist? playlist;
     try {
       // debugPrint('parseHls $url');
@@ -224,6 +226,7 @@ class PageProject extends StatelessWidget {
       } else {
         log('未知错误：\n ${e.toString()}', LogType.error);
       }
+      if (isFirst) stopTask();
     }
     if (playlist is HlsMasterPlaylist) {
       // master m3u8 file
@@ -234,7 +237,11 @@ class PageProject extends StatelessWidget {
           log('variants 分辨率 ${v.format.width} x ${v.format.height}, 码率 ${v.format.bitrate}\n${v.url}');
         });
       if (status.value.isLoading) {
-        return parseHls(playlist.variants.first.url, playlist);
+        return parseHls(
+          playlist.variants.first.url,
+          masterPlaylist: playlist,
+          isFirst: false,
+        );
       }
     } else if (playlist is HlsMediaPlaylist) {
       // debugPrint('m3u8媒体');
@@ -243,7 +250,11 @@ class PageProject extends StatelessWidget {
       if (!playlist.hasEndTag && status.value.isLoading) {
         debugPrint('直播型m3u8');
         await Future.delayed(Duration(seconds: 2));
-        parseHls(url, masterPlaylist);
+        parseHls(
+          url,
+          masterPlaylist: masterPlaylist,
+          isFirst: false,
+        );
       } else if (status.value.isLoading) {
         stopTask();
         showToast('任务已完成');
