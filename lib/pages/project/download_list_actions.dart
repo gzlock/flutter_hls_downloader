@@ -5,6 +5,9 @@ import 'file_task.dart';
 import 'project_controller.dart';
 
 class DownLoadListActions extends GetWidget<ProjectController> {
+  final void Function() clear;
+  DownLoadListActions(this.clear);
+
   final values = [null, ...TaskState.values];
   late final List<DropdownMenuItem<TaskState?>> items = values
       .map((value) => DropdownMenuItem(
@@ -13,14 +16,15 @@ class DownLoadListActions extends GetWidget<ProjectController> {
           ))
       .toList();
 
+
   @override
   Widget build(BuildContext context) {
     return Row(
       children: [
         MaterialButton(
           textColor: Colors.white,
+          onPressed: clear,
           child: Text('清空'),
-          onPressed: () => controller.tasks.clear(),
         ),
         SizedBox(width: 10),
         MaterialButton(

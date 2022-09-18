@@ -76,7 +76,7 @@ class PageProject extends GetWidget<ProjectController> {
                       case 1:
                         return LogActions();
                       default:
-                        return DownLoadListActions();
+                        return DownLoadListActions(clearDownloadQueue);
                     }
                   })
                 ],
@@ -177,6 +177,7 @@ class PageProject extends GetWidget<ProjectController> {
       ],
     ));
     if (sure != true) return;
+    controller.tasks.clear();
     controller.project.queue.clear();
   }
 }
