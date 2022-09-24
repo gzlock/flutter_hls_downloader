@@ -25,7 +25,7 @@ class Log {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SizedBox(width: 140, child: SelectableText(dateFormat.format(time))),
+          SizedBox(width: 140, child: SelectableText(logDateFormat.format(time))),
           Expanded(child: SelectableText(text)),
         ],
       ),

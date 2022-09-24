@@ -19,8 +19,12 @@ const defaultUserAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) '
 
 late final String storePath;
 late SharedPreferences prefs;
-final dateFormat = DateFormat('yyyy-MM-dd HH:mm:ss');
-final fileNameFormat = DateFormat('yyyyMMdd HH_mm_ss');
+
+/// log 日期格式化
+final logDateFormat = DateFormat('yyyy-MM-dd HH:mm:ss');
+
+/// 合并文件名格式化
+final fileNameFormat = DateFormat('yyyy-MM-dd HH-mm-ss');
 
 Dio createHttpFromProject(Project project) => createHttp(
       userAgent: project.userAgent.value,

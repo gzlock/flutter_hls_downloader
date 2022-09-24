@@ -148,7 +148,6 @@ class Project {
   late final SettingKeyValue<int> downloadParallel;
   late final SettingKeyValue<int> downloadTimeout;
   late final SettingKeyValue<int> errorRetry;
-  late final SettingKeyValue<bool> waterMark;
   late final SettingKeyValue<String> waterMarkText;
   late final SettingKeyValue<int> waterMarkCount;
   late final List<SettingKeyValue> _list;
@@ -198,11 +197,6 @@ class Project {
       defaultValue: 5,
     );
 
-    waterMark = SettingKeyValue(
-      project: this,
-      key: 'waterMark',
-      defaultValue: false,
-    );
     waterMarkText = SettingKeyValue(
       project: this,
       key: 'waterMarkText',
@@ -222,7 +216,6 @@ class Project {
       downloadParallel,
       errorRetry,
       downloadTimeout,
-      waterMark,
       waterMarkText,
       waterMarkCount,
     ];

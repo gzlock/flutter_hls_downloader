@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:oktoast/oktoast.dart';
 
 import 'file_task.dart';
 import 'project_controller.dart';
 
 class DownLoadListActions extends GetWidget<ProjectController> {
   final void Function() clear;
+
   DownLoadListActions(this.clear);
 
   final values = [null, ...TaskState.values];
@@ -15,7 +17,6 @@ class DownLoadListActions extends GetWidget<ProjectController> {
             child: Text(taskStateToText(value)),
           ))
       .toList();
-
 
   @override
   Widget build(BuildContext context) {
@@ -30,10 +31,16 @@ class DownLoadListActions extends GetWidget<ProjectController> {
         MaterialButton(
           textColor: Colors.white,
           child: Text('合并'),
-          onPressed: () => Get.toNamed(
-            '/mergeMp4/${controller.project.id}',
-            arguments: controller.tasks,
-          ),
+          onPressed: () {
+            if (controller.isWorking) {
+              showToast('正在录制，无法合并');
+              return;
+            }
+            Get.toNamed(
+              '/mergeMp4/${controller.project.id}',
+              arguments: controller.tasks,
+            );
+          },
         ),
         Obx(
           () => DropdownButtonHideUnderline(

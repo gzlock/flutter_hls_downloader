@@ -37,13 +37,16 @@ class ProjectController extends GetxController {
   bool get isWorking => _state.value == ProjectState.working;
 
   start() {
+    log('任务开始', color: Colors.green);
     _http = createHttpFromProject(project);
     _state.value = ProjectState.working;
     parseHls(Uri.parse(project.hls.value), isFirst: true);
   }
 
-  stop() {
+  Future stop() {
+    log('任务停止', color: Colors.red);
     _state.value = ProjectState.none;
+    return project.queue.whenComplete();
   }
 
   TaskState? get downloadListFilter => _downloadListFilter.value;
@@ -85,16 +88,16 @@ class ProjectController extends GetxController {
         String download = '';
         if (v == variants.last) {
           color = Colors.green;
-          download = '正在下载';
+          download = '正在下载 ';
         }
         log(
-          '$download 分辨率 ${v.format.width} x ${v.format.height}, 码率 ${v.format.bitrate}',
+          '$download分辨率 ${v.format.width} x ${v.format.height}, 码率 ${v.format.bitrate}',
           color: color,
         );
       }
       if (isWorking) {
         return parseHls(
-          playlist.variants.first.url,
+          playlist.variants.last.url,
           masterPlaylist: playlist,
           isFirst: false,
         );

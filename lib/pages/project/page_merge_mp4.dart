@@ -20,7 +20,6 @@ import 'project_controller.dart';
 class PageMergeMp4 extends GetWidget<ProjectController> {
   final hasFFmpeg = RxnBool();
   final _ffmpegVersion = RxString('');
-  late final waterMark = controller.project.waterMark;
   late final waterMarkText = controller.project.waterMarkText.controller();
   late final waterMarkCount = controller.project.waterMarkCount.controller();
   final waterMarkCountUniqueKey = UniqueKey();
@@ -87,7 +86,7 @@ class PageMergeMp4 extends GetWidget<ProjectController> {
           actions: hasFFmpeg.value == true
               ? [
                   InkWell(
-                    onTap: startMerge,
+                    onTap: _startMerge,
                     child: Padding(
                       padding: EdgeInsets.only(left: 8, right: 8),
                       child: Row(
@@ -111,7 +110,7 @@ class PageMergeMp4 extends GetWidget<ProjectController> {
   }
 
   Widget createBody() {
-    debugPrint('build body');
+    // debugPrint('build body');
     final items = [
       ListTile(
         title: Text('FFmpeg'),
@@ -126,34 +125,23 @@ class PageMergeMp4 extends GetWidget<ProjectController> {
         trailing: Text(_list().length.toString()),
       ),
       ListTile(
-        title: Text('撤销添加水印操作'),
-        subtitle: Text('即将视频碎片还原为没有添加文字水印前的文件'),
-        onTap: _recoverFiles,
-      ),
-      CheckboxListTile(
-        value: waterMark.value,
-        onChanged: (val) {
-          waterMark.set(val!);
-        },
-        title: Text('合并前给碎片添加文字水印'),
-        subtitle: waterMark.value
-            ? Column(
-                children: [
-                  TextField(
-                    key: waterMarkCountUniqueKey,
-                    keyboardType: TextInputType.number,
-                    controller: waterMarkCount.controller,
-                    focusNode: waterMarkCount.focusNode,
-                    decoration: InputDecoration(labelText: '给多少碎片添加水印'),
-                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                  ),
-                  TextField(
-                    decoration: InputDecoration(labelText: '水印文字'),
-                    controller: waterMarkText.controller,
-                  ),
-                ],
-              )
-            : null,
+        title: Text('给多少个碎片添加文字水印'),
+        subtitle: Column(
+          children: [
+            TextField(
+              key: waterMarkCountUniqueKey,
+              keyboardType: TextInputType.number,
+              controller: waterMarkCount.controller,
+              focusNode: waterMarkCount.focusNode,
+              decoration: InputDecoration(labelText: '给多少碎片添加水印'),
+              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+            ),
+            TextField(
+              decoration: InputDecoration(labelText: '水印文字'),
+              controller: waterMarkText.controller,
+            ),
+          ],
+        ),
       )
     ];
     return ListView.separated(
@@ -164,51 +152,59 @@ class PageMergeMp4 extends GetWidget<ProjectController> {
   }
 
   /// 开始合并文件
-  Future<void> startMerge() async {
-    if (controller.tasks.isEmpty) return;
+  Future<void> _startMerge() async {
+    if (controller.tasks.isEmpty) {
+      showToast('没有碎片文件');
+      return;
+    }
 
     BeforeClose.instance.intercept.value = true;
     await _copyFontToAppPath();
     await _createFileListTxt();
-    if (waterMark.value) {
-      await _tsAddWaterMark();
-    }
+
+    /// 添加水印文字
+    await _tsAddWaterMark();
     try {
       final file = await _mergeToMp4();
-      Get.dialog(
+      final open = await Get.dialog(
         AlertDialog(
           title: Text('合并完成'),
           content: Text('是否打开文件'),
           actions: [
             ElevatedButton(
-              onPressed: () {
-                String? command;
-                if (GetPlatform.isWindows) {
-                  command = 'explorer /select,"${file.absolute.path}"';
-                } else if (GetPlatform.isMacOS && GetPlatform.isLinux) {
-                  command = ['open', '-R', file.absolute.path].join(' ');
-                }
-                if (command == null) {
-                  showToast('无法定位文件');
-                  return;
-                }
-                Get.back();
-                run(command, verbose: false);
-              },
+              onPressed: () => Get.back(result: true),
               child: Text('打开文件'),
             )
           ],
         ),
       );
       showToast('合并成功');
+      controller.log('合并成功', color: Colors.green);
+      if (open == true) {
+        String? command;
+        if (GetPlatform.isWindows) {
+          command = 'explorer /select, "${file.absolute.path}"';
+        } else if (GetPlatform.isMacOS && GetPlatform.isLinux) {
+          command = ['open', '-R', file.absolute.path].join(' ');
+        }
+        debugPrint('命令 $command');
+        if (command == null) {
+          showToast('无法定位文件');
+          return;
+        }
+        run(command, verbose: false);
+      }
     } catch (e) {
       showToast('合并失败');
+      controller.log('合并失败:\n${e.toString()}', color: Colors.red);
     }
     BeforeClose.instance.intercept.value = false;
   }
 
   Iterable<FileTask> _list() {
-    return controller.tasks.values.where((file) => file.state.value.isSuccess);
+    return controller.tasks.values.where((file) {
+      return file.state.value.isSuccess && File(file.filePath).existsSync();
+    });
   }
 
   /// 创建ts文本列表，给ffmpeg合并用
@@ -224,7 +220,7 @@ class PageMergeMp4 extends GetWidget<ProjectController> {
     final fontFile = File(path.join(storePath, fontName));
     if (fontFile.existsSync()) return;
     debugPrint('copy font');
-    final ByteData data = await rootBundle.load('assets/fonts/$fontName');
+    final ByteData data = await rootBundle.load('assets/font/$fontName');
     List<int> bytes =
         data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes);
     await fontFile.writeAsBytes(bytes);
@@ -232,20 +228,47 @@ class PageMergeMp4 extends GetWidget<ProjectController> {
 
   /// 添加水印
   Future<void> _tsAddWaterMark() async {
-    final font = path.join(storePath, fontName);
+    final sure = await Get.dialog(
+      AlertDialog(
+        title: Text('添加文字水印吗？'),
+        actions: [
+          TextButton(
+            onPressed: () => Get.back(),
+            child: Text('不添加'),
+          ),
+          ElevatedButton(
+            onPressed: () => Get.back(result: true),
+            child: Text('添加'),
+          ),
+        ],
+      ),
+      barrierDismissible: false,
+    );
+    if (sure != true) return;
+    if (waterMarkText.value.value.isBlank == true) {
+      showToast('请填写水印文字');
+      return;
+    }
+
+    /// 恢复加了水印的碎片
+    await _recoverFiles();
+
+    final font = path
+        .join(storePath, fontName)
+        .replaceAll('\\', '\\\\')
+        .replaceFirst(':', '\\:');
+    debugPrint('字体文件\n$font');
     final watermark = waterMarkText.value.value;
     final random = Random();
     final List<FileTask> list = List.from(controller.tasks.values)
       ..shuffle(random);
-    final finalCount = list.length > waterMarkCount.value.value
-        ? waterMarkCount.value.value
-        : list.length;
+    final finalCount = min(list.length, waterMarkCount.value.value);
 
     final info = await getVideoInfo(list.first.filePath);
 
     List.generate(finalCount, (index) {
       final file = list[index];
-      debugPrint('添加水印 ${file.filePath}');
+      // debugPrint('添加水印 ${file.filePath}');
       final top = random.nextBool();
       final left = random.nextBool();
       String x = (random.nextInt(90) + 10).toString();
@@ -262,12 +285,11 @@ class PageMergeMp4 extends GetWidget<ProjectController> {
         await File(file.filePath).rename(oldFile);
         final command = [
           'ffmpeg -i "$oldFile"',
-          '-vf "drawtext=fontfile=\'$font\': text=\'$watermark\'',
-          ':x=$x: y=$y: fontsize=20: fontcolor=white@0.8: box=1: boxcolor=random@0.5: boxborderw=5"',
+          '-vf "drawtext=fontfile=\'$font\': text=\'$watermark\':x=$x:y=$y:fontsize=20:fontcolor=white@0.8:box=1:boxcolor=random@0.5:boxborderw=5"',
           '-c:a copy -c:v ${info.codec_name} -profile:v ${info.profile} -level ${info.level}',
           '${file.filePath} -y',
         ].join(' ');
-        // debugPrint(command);
+        debugPrint(command);
         return run(command, verbose: false);
       });
     });
@@ -280,6 +302,7 @@ class PageMergeMp4 extends GetWidget<ProjectController> {
     final now = DateTime.now();
     final target = path.join(
         controller.project.savePath.value, '${fileNameFormat.format(now)}.mp4');
+    controller.log('合并文件到\n$target');
     final command = [
       'ffmpeg',
       '-f concat',
@@ -292,13 +315,10 @@ class PageMergeMp4 extends GetWidget<ProjectController> {
     final toast = ProcessingToastWidget.showText('正在合并为mp4文件');
 
     try {
-      await Future.wait([
-        Future.delayed(Duration(seconds: 1)),
-        run(
-          command,
-          verbose: false,
-        ),
-      ]);
+      await run(
+        command,
+        verbose: false,
+      );
     } catch (e) {
       rethrow;
     } finally {
@@ -324,7 +344,7 @@ class PageMergeMp4 extends GetWidget<ProjectController> {
 
     if (fileQueue.pending == 0) return;
 
-    final toast = ProcessingToastWidget.showQueue('恢复中', fileQueue);
+    final toast = ProcessingToastWidget.showQueue('正在准备', fileQueue);
     await Future.wait([
       Future.delayed(Duration(seconds: 1)),
       fileQueue.whenComplete(),

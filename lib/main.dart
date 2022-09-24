@@ -24,7 +24,7 @@ class ReloadProjectsWindowListener extends WindowListener {
 
 const isDev = !bool.fromEnvironment('dart.vm.product', defaultValue: false);
 
-const fontName = 'SourceHanSansCN-Regular.otf';
+const fontName = 'Alibaba-PuHuiTi-Medium.ttf';
 
 late final List<String> arguments;
 
@@ -67,7 +67,7 @@ class MyApp extends StatelessWidget {
       child: GetMaterialApp(
         theme: ThemeData(
           primarySwatch: Colors.blue,
-          fontFamily: 'font',
+          fontFamily: 'Alibaba',
         ),
         debugShowCheckedModeBanner: false,
         initialRoute: '/',

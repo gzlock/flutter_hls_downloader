@@ -76,7 +76,7 @@ class PageProject extends GetWidget<ProjectController> {
                       case 1:
                         return LogActions();
                       default:
-                        return DownLoadListActions(clearDownloadQueue);
+                        return DownLoadListActions(_clearDownloadList);
                     }
                   })
                 ],
@@ -138,8 +138,24 @@ class PageProject extends GetWidget<ProjectController> {
     );
   }
 
+  void _clearDownloadList() async {
+    if (controller.tasks.isEmpty) return;
+    final sure = await Get.dialog(AlertDialog(
+      title: Text('警告'),
+      content: Text('清空下载列表将会影响合并文件！'),
+      actions: [
+        ElevatedButton(
+          onPressed: () => Get.back(result: true),
+          child: Text('清空'),
+        )
+      ],
+    ));
+    if (sure != true) return;
+    controller.tasks.clear();
+  }
+
   void startTask() {
-    print('startProject ${controller.isWorking}');
+    debugPrint('startProject ${controller.isWorking}');
     if (controller.isWorking) return;
     if (controller.project.hls.isBlank != false) {
       showToast('请填写Hls源');
@@ -158,26 +174,26 @@ class PageProject extends GetWidget<ProjectController> {
     controller.start();
   }
 
-  void stopTask() {
-    showToast('任务已完成');
-    controller.stop();
+  void stopTask() async {
+    await controller.stop();
     clearDownloadQueue();
+    showToast('任务停止');
   }
 
   void clearDownloadQueue() async {
-    if (controller.project.queue.pending == 0) return;
-    final sure = await Get.dialog(AlertDialog(
-      title: Text('是否停止所有下载任务？'),
-      actions: [
-        TextButton(onPressed: () => Get.back(), child: Text('否')),
-        ElevatedButton(
-          onPressed: () => Get.back(result: true),
-          child: Text('是'),
-        ),
-      ],
-    ));
-    if (sure != true) return;
-    controller.tasks.clear();
-    controller.project.queue.clear();
+    if (controller.project.queue.pending > 0) {
+      final sure = await Get.dialog(AlertDialog(
+        title: Text('是否停止所有下载任务？'),
+        actions: [
+          TextButton(onPressed: () => Get.back(), child: Text('否')),
+          ElevatedButton(
+            onPressed: () => Get.back(result: true),
+            child: Text('是'),
+          ),
+        ],
+      ));
+      if (sure != true) return;
+      controller.project.queue.clear();
+    }
   }
 }
