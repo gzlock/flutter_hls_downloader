@@ -152,7 +152,7 @@ class Project {
   late final SettingKeyValue<int> waterMarkCount;
   late final List<SettingKeyValue> _list;
   late final Queue queue = Queue();
-  late final Dio http;
+  late Dio http;
 
   Project({
     required this.id,
@@ -183,7 +183,7 @@ class Project {
     downloadParallel = SettingKeyValue(
       project: this,
       key: 'downloadParallel',
-      defaultValue: 5,
+      defaultValue: 10,
     )..listen((val) => queue.parallel = val);
 
     downloadTimeout = SettingKeyValue(
@@ -194,7 +194,7 @@ class Project {
     errorRetry = SettingKeyValue(
       project: this,
       key: 'errorRetry',
-      defaultValue: 5,
+      defaultValue: 10,
     );
 
     waterMarkText = SettingKeyValue(
@@ -220,6 +220,8 @@ class Project {
       waterMarkCount,
     ];
   }
+
+  createHttp() => http = createHttpFromProject(this);
 
   void save() => Projects.save();
 

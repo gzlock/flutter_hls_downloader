@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
-import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+
+import '../../utils/project.dart';
 
 enum TaskState {
   wait,
@@ -25,13 +26,14 @@ String taskStateToText(TaskState? status) {
 }
 
 class FileTask {
-  final Dio http;
+  final Project project;
   final Rx<RxStatus> state;
   final String url;
   final String filePath;
+  int times = 0;
 
   FileTask(
-    this.http,
+    this.project,
     this.url,
     this.filePath, [
     RxStatus? state,
@@ -39,12 +41,26 @@ class FileTask {
 
   Future<FileTask> download() async {
     state.value = RxStatus.loading();
-    await http.download(url, filePath).then((value) {
+    times++;
+    try {
+      await project.http.download(url, filePath);
       state.value = RxStatus.success();
-    }).catchError((err) {
-      debugPrint('下载失败 $url');
-      state.value = RxStatus.error(err.toString());
-    });
+    } catch (e) {
+      if (times <= project.errorRetry.value) {
+        return download();
+      } else {
+        if (e.runtimeType == DioError) {
+          e as DioError;
+          if (e.response == null) {
+            state.value = RxStatus.error('网络错误： ${e.toString()}');
+          } else {
+            state.value = RxStatus.error('网络错误，状态码： ${e.response!.statusCode}');
+          }
+        } else {
+          state.value = RxStatus.error('未知错误 ${e.toString()}');
+        }
+      }
+    }
     return this;
   }
 }

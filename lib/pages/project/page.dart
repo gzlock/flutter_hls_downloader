@@ -10,7 +10,7 @@ import 'download_list_actions.dart';
 import 'drawer.dart';
 import 'log.dart';
 import 'project_controller.dart';
-import 'setup.dart';
+import 'project_setup.dart';
 import 'tab_controller.dart';
 
 class PageProject extends GetWidget<ProjectController> {

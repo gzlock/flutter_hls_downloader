@@ -2,34 +2,16 @@ import 'dart:io';
 
 import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:oktoast/oktoast.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 
+import 'list_tile_int.dart';
 import 'project_controller.dart';
 
 class SettingWidget extends GetWidget<ProjectController> {
   late final hls = controller.project.hls.controller();
   late final proxy = controller.project.proxy.controller();
-  late final downloadParallel =
-      controller.project.downloadParallel.controller(beforeSave: (val) {
-    if (val < 2) {
-      val = 2;
-    } else if (val > 10) {
-      val = 10;
-    }
-    return val;
-  });
-  late final errorRetry =
-      controller.project.errorRetry.controller(beforeSave: (val) {
-    if (val < 2) {
-      val = 2;
-    } else if (val > 10) {
-      val = 10;
-    }
-    return val;
-  });
   late final userAgent = controller.project.userAgent.controller();
 
   @override
@@ -95,35 +77,20 @@ class SettingWidget extends GetWidget<ProjectController> {
                   ]),
                 ),
               ))),
-      ListTile(
+      ListTileInt(
         title: Text('视频碎片同时下载数量'),
-        subtitle: Text('最少2，最多10'),
-        trailing: SizedBox(
-          width: 40,
-          child: Obx(() => TextField(
-                enabled: !controller.isWorking,
-                textAlign: TextAlign.center,
-                keyboardType: TextInputType.number,
-                controller: downloadParallel.controller,
-                focusNode: downloadParallel.focusNode,
-                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-              )),
-        ),
+        subtitle: Text('最少2，最多50'),
+        value: controller.project.downloadParallel.value,
+        step: 1,
+        verify: (val) => val.clamp(2, 50),
+        onChange: controller.project.downloadParallel.set,
       ),
-      ListTile(
+      ListTileInt(
         title: Text('下载失败重试次数'),
-        subtitle: Text('最少2，最多10'),
-        trailing: SizedBox(
-          width: 40,
-          child: Obx(() => TextField(
-                enabled: !controller.isWorking,
-                textAlign: TextAlign.center,
-                keyboardType: TextInputType.number,
-                controller: errorRetry.controller,
-                focusNode: errorRetry.focusNode,
-                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-              )),
-        ),
+        subtitle: Text('最少2，最多50'),
+        value: controller.project.errorRetry.value,
+        verify: (val) => val.clamp(2, 50),
+        onChange: controller.project.errorRetry.set,
       ),
       ListTile(
         title: Text('网络请求User-Agent'),

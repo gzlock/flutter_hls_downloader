@@ -69,7 +69,7 @@ class DownloadList extends GetWidget<ProjectController> {
 
   Widget? _status(FileTask file) {
     final state = file.state.value;
-    if (state.isLoading) return Text('下载中');
+    if (state.isLoading) return Text('第${file.times}次 下载中');
     if (state.isSuccess) return Text('完成');
     if (state.isEmpty) return Text('排队');
     if (state.isError) {

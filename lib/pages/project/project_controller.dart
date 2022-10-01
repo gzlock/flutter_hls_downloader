@@ -6,7 +6,6 @@ import 'package:oktoast/oktoast.dart';
 import 'package:path/path.dart' as path;
 
 import '../../utils/project.dart';
-import '../../utils/utils.dart';
 import 'file_task.dart';
 import 'log.dart';
 
@@ -30,15 +29,13 @@ class ProjectController extends GetxController {
   /// 日志
   final RxList<Log> logs = RxList();
 
-  Dio? _http;
-
   ProjectController(this.project);
 
   bool get isWorking => _state.value == ProjectState.working;
 
   start() {
     log('任务开始', color: Colors.green);
-    _http = createHttpFromProject(project);
+    project.createHttp();
     _state.value = ProjectState.working;
     parseHls(Uri.parse(project.hls.value), isFirst: true);
   }
@@ -64,7 +61,7 @@ class ProjectController extends GetxController {
     try {
       // debugPrint('parseHls $url');
       // debugPrint('${masterPlaylist == null ? '没有' : '有'}提供主体m3u8');
-      final data = await _http!.getUri(url).then((res) => res.data);
+      final data = await project.http.getUri(url).then((res) => res.data);
       // debugPrint('m3u8 内容\n $data');
       playlist = await HlsPlaylistParser.create(masterPlaylist: masterPlaylist)
           .parseString(url, data);
@@ -137,7 +134,7 @@ class ProjectController extends GetxController {
       }
 
       final task = FileTask(
-        _http!,
+        project,
         downloadUrl,
         path.join(project.savePath.value, fileName),
       );

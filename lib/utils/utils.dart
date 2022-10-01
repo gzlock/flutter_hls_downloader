@@ -3,8 +3,6 @@ import 'dart:math' as math;
 
 import 'package:dio/adapter.dart';
 import 'package:dio/dio.dart';
-import 'package:dio_smart_retry/dio_smart_retry.dart';
-import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:process_run/shell_run.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -28,13 +26,11 @@ final fileNameFormat = DateFormat('yyyy-MM-dd HH-mm-ss');
 
 Dio createHttpFromProject(Project project) => createHttp(
       userAgent: project.userAgent.value,
-      errorRetry: project.errorRetry.value,
       proxy: project.proxy.value,
     );
 
 Dio createHttp({
   required String userAgent,
-  int? errorRetry,
   String? proxy,
 }) {
   // debugPrint('创建http');
@@ -44,14 +40,6 @@ Dio createHttp({
     followRedirects: true,
     headers: {'user-agent': userAgent},
   ));
-  if (errorRetry != null && errorRetry > 0) {
-    http.interceptors.add(RetryInterceptor(
-      dio: http,
-      logPrint: debugPrint, // specify log function (optional)
-      retries: errorRetry,
-      retryDelays: [], // retry count (
-    ));
-  }
   if (proxy != null && proxy.isNotEmpty) {
     (http.httpClientAdapter as DefaultHttpClientAdapter).onHttpClientCreate =
         (client) {
