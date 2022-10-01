@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:dio/dio.dart';
 import 'package:get/get.dart';
 
@@ -44,6 +46,11 @@ class FileTask {
     times++;
     try {
       await project.http.download(url, filePath);
+      if (Random().nextBool()) {
+        throw DioError(
+          requestOptions: RequestOptions(path: url),
+        );
+      }
       state.value = RxStatus.success();
     } catch (e) {
       if (times <= project.errorRetry.value) {
@@ -52,7 +59,7 @@ class FileTask {
         if (e.runtimeType == DioError) {
           e as DioError;
           if (e.response == null) {
-            state.value = RxStatus.error('网络错误： ${e.toString()}');
+            state.value = RxStatus.error('网络错误： ${e.message}');
           } else {
             state.value = RxStatus.error('网络错误，状态码： ${e.response!.statusCode}');
           }

@@ -42,30 +42,32 @@ class ListTileInt extends StatelessWidget {
               InkWell(
                 child: Icon(Icons.arrow_drop_up_sharp, color: color),
                 onTap: () {
+                  timer.value?.cancel();
                   value.value = verify(value.value + step);
                 },
-                onLongPress: () {
+                onTapDown: (_) {
                   timer.value?.cancel();
                   timer.value =
                       Timer.periodic(Duration(milliseconds: 400), (timer) {
                     value.value = verify(value.value + step);
                   });
                 },
-                onTapCancel: () => timer.value?.cancel(),
+                onTapUp: (_) => timer.value?.cancel(),
               ),
               InkWell(
                 child: Icon(Icons.arrow_drop_down_sharp, color: color),
                 onTap: () {
+                  timer.value?.cancel();
                   value.value = verify(value.value - step);
                 },
-                onLongPress: () {
+                onTapDown: (_) {
                   timer.value?.cancel();
                   timer.value =
                       Timer.periodic(Duration(milliseconds: 400), (timer) {
                     value.value = verify(value.value - step);
                   });
                 },
-                onTapCancel: () => timer.value?.cancel(),
+                onTapUp: (_) => timer.value?.cancel(),
               ),
             ],
           ),
