@@ -78,7 +78,7 @@ class SettingWidget extends GetWidget<ProjectController> {
                 ),
               ))),
       ListTileInt(
-        title: Text('视频碎片同时下载数量'),
+        title: Text('每次下载多少个视频碎片(队列)'),
         subtitle: Text('最少2，最多50'),
         value: controller.project.downloadParallel.value,
         step: 1,
