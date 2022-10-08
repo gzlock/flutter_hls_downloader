@@ -72,7 +72,11 @@ class ProjectController extends GetxController {
       } else {
         log('未知错误：\n ${e.toString()}', type: LogType.error);
       }
-      if (isFirst) stop();
+      if (isFirst) {
+        stop();
+      } else {
+        return parseHls(url, masterPlaylist: masterPlaylist, isFirst: isFirst);
+      }
     }
     if (playlist is HlsMasterPlaylist) {
       // master m3u8 file
