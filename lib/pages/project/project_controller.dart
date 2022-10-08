@@ -66,13 +66,13 @@ class ProjectController extends GetxController {
       playlist = await HlsPlaylistParser.create(masterPlaylist: masterPlaylist)
           .parseString(url, data);
     } catch (e) {
-      showToast('出现错误');
       if (e is DioError) {
         log('读取Hls源出现网络错误：\n${e.message}', type: LogType.error);
       } else {
         log('未知错误：\n ${e.toString()}', type: LogType.error);
       }
       if (isFirst) {
+        showToast('出现错误');
         stop();
       } else {
         return parseHls(url, masterPlaylist: masterPlaylist, isFirst: isFirst);
